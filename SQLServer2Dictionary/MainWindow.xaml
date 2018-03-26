@@ -1,0 +1,170 @@
+﻿<Window x:Class="SQLServer2Dictionary.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SQLServer2Dictionary"
+        mc:Ignorable="d"
+        Title="Create CSPro Dictionary from SQL Server" Height="500" Width="580"
+        Loaded="Window_Loaded">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Row="0" Grid.Column="0" Margin="5">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <TextBlock Text="SQL Server Database" FontWeight="Bold" Grid.Row="0" HorizontalAlignment="Center"/>
+            <TreeView x:Name="treeViewTables" ItemsSource="{Binding DatabaseTables}" Grid.Row="1" Grid.Column="0" MouseMove="treeViewTables_MouseMove" >
+                <TreeView.ItemTemplate>
+                    <HierarchicalDataTemplate ItemsSource="{Binding Columns}">
+                        <TextBlock Text="{Binding FullName}" />
+                        <HierarchicalDataTemplate.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}" />
+                            </DataTemplate>
+                        </HierarchicalDataTemplate.ItemTemplate>
+                    </HierarchicalDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
+        </Grid>
+        <Grid Grid.Row="0" Grid.Column="1" Margin="5">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBlock Text="CSPro Dictionary" FontWeight="Bold" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Center"/>
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Label Content="Label" Target="{Binding ElementName=textBoxDictionaryLabel}" Grid.Column="0"/>
+                <TextBox x:Name="textBoxDictionaryLabel" VerticalAlignment="Center" Text="{Binding DictionaryLabel}" Margin="10,0,20,0" Grid.Column="1" />
+            </Grid>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="2">
+                <Label Content="Levels:" Target="{Binding ElementName=treeViewTables}"  />
+                <Button x:Name="buttonAddLevel"  Margin="5, 0, 0, 0" Height="15" Click="buttonAddLevel_Click">
+                    <Button.ToolTip>
+                        <ToolTip>
+                                <TextBlock>Add new level</TextBlock>
+                        </ToolTip>
+                    </Button.ToolTip>
+                    <Image Source="/Images/Add_16x.png"  />
+                </Button>
+            </StackPanel>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Row="3">
+                <ItemsControl x:Name="listViewLevels" ItemsSource="{Binding LevelSpecs}" HorizontalContentAlignment="Stretch" >
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border BorderBrush="Gray" BorderThickness="1" Margin="5">
+                                <Grid Margin="5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <Grid Grid.Row="0">
+                                        <TextBlock Text="{Binding Number}" HorizontalAlignment="Left" Margin="2,0,0,0"/>
+                                    </Grid>
+                                    <StackPanel Orientation="Horizontal" Grid.Row="1">
+                                        <Label Content="Label" Target="{Binding ElementName=textBoxLevelName}" />
+                                        <TextBox x:Name="textBoxLevelName" VerticalAlignment="Center" Text="{Binding Name}" Width="120" Margin="10,0,0,0" />
+                                    </StackPanel>
+                                    <Label Grid.Row="2" Content="Id Items" Target="{Binding ElementName=listBoxIdItems}" />
+                                    <ListBox Margin="15,0,0,0" Grid.Row="3" x:Name="listBoxIdItems" ItemsSource="{Binding IdItems}" AllowDrop="True" Drop="listBoxIdItems_Drop" DragOver="listBoxIdItems_DragOver" >
+                                        <ListBox.Style>
+                                            <Style  TargetType="ListBox">
+                                                <Style.Triggers>
+                                                    <Trigger Property="HasItems" Value="False">
+                                                        <Setter Property="Template">
+                                                            <Setter.Value>
+                                                                <ControlTemplate>
+                                                                    <Border BorderThickness="1" Padding="1,1,1,1" BorderBrush="DarkGray">
+                                                                        <Grid Background="{TemplateBinding Background}">
+                                                                            <TextBlock Foreground="DarkGray" Text="Drag and drop database columns here" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                                                        </Grid>
+                                                                    </Border>
+                                                                </ControlTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ListBox.Style>
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Name}" />
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                    <Label Grid.Row="4" Content="Records" Target="{Binding ElementName=listBoxRecords}" />
+                                    <ListBox Margin="15,0,0,0" Grid.Row="5" x:Name="listBoxRecords" ItemsSource="{Binding Records}" AllowDrop="True" Drop="listBoxRecords_Drop" DragOver="listBoxRecords_DragOver">
+                                        <ListBox.Style>
+                                            <Style  TargetType="ListBox" >
+                                                <Style.Triggers>
+                                                    <Trigger Property="HasItems" Value="False">
+                                                        <Setter Property="Template">
+                                                            <Setter.Value>
+                                                                <ControlTemplate>
+                                                                    <Border BorderThickness="1" Padding="1,1,1,1" BorderBrush="DarkGray">
+                                                                        <Grid Background="{TemplateBinding Background}">
+                                                                            <TextBlock Foreground="DarkGray" Text="Drag and drop database tables here" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                                                        </Grid>
+                                                                    </Border>
+                                                                </ControlTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ListBox.Style>
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock>
+                                                    <TextBlock.Text>
+                                                        <MultiBinding StringFormat="{}{0} ({1})">
+                                                            <Binding Path="Name" />
+                                                            <Binding Path="DatabaseTable.FullName" />
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+            <Grid Grid.Row="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Label Content="Save to" Target="{Binding ElementName=textBoxDictionaryLabel}" Grid.Column="0"/>
+                <TextBox x:Name="textBoxDictionaryFilename" VerticalAlignment="Center" Text="{Binding DictionaryPath}" Margin="10,0,0,0" Grid.Column="1"/>
+                <Button x:Name="buttonDictionaryFilenameBrowse" VerticalAlignment="Center" Padding="5,0,5,0" Margin="0,0,5,0" Content="..." Click="buttonDictionaryFilenameBrowse_Click" Grid.Column="2" />
+            </Grid>
+            <Button x:Name="buttonCreateDictionary" Margin="5" Padding="5" Content="Create Dictionary" HorizontalAlignment="Center" Click="buttonCreateDictionary_Click" Grid.Row="5"/>
+        </Grid>
+    </Grid>
+</Window>
