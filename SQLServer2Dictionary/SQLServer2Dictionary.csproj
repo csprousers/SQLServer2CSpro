@@ -108,16 +108,16 @@
     <Resource Include="Images\Add_16x.png" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="SQLite.dll">
+    <Content Include="..\CSProDlls\SQLite.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="zDictO.dll">
+    <Content Include="..\CSProDlls\zDictO.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="zToolsO.dll">
+    <Content Include="..\CSProDlls\zToolsO.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="zUtilO.dll">
+    <Content Include="..\CSProDlls\zUtilO.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
