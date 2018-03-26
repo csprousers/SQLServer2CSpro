@@ -27,12 +27,14 @@ namespace SQLServer2Dictionary
                 // Cancelled
                 Current.Shutdown(-1);
             }
-
-            var mainWindow = new MainWindow(connectionString);
-            //Re-enable normal shutdown mode.
-            Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
-            Current.MainWindow = mainWindow;
-            mainWindow.Show();
+            else
+            {
+                var mainWindow = new MainWindow(connectionString);
+                //Re-enable normal shutdown mode.
+                Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
+                Current.MainWindow = mainWindow;
+                mainWindow.Show();
+            }
         }
     }
 }
