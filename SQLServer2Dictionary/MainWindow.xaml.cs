@@ -22,7 +22,6 @@ namespace SQLServer2Dictionary
 
     public class LevelSpec
     {
-        public int Number { get; set; }
         public String Name { get; set; }
         public ObservableCollection<DatabaseColumn> IdItems { get; set; }
         public ObservableCollection<RecordSpec> Records { get; set; }
@@ -78,7 +77,6 @@ namespace SQLServer2Dictionary
                     LevelSpecs.Add(
                         new LevelSpec
                         {
-                            Number = 1,
                             Name = connection.Database + " questionnaire",
                             IdItems = new ObservableCollection<DatabaseColumn>(),
                             Records = new ObservableCollection<RecordSpec>()
@@ -228,7 +226,6 @@ namespace SQLServer2Dictionary
         {
             LevelSpecs.Add(new LevelSpec {
                 Name = "",
-                Number = LevelSpecs.Count + 1,
                 IdItems = new ObservableCollection<DatabaseColumn>(),
                 Records = new ObservableCollection<RecordSpec>() });
         }
@@ -304,6 +301,36 @@ namespace SQLServer2Dictionary
             {
                 DictionaryPath = saveFileDialog.FileName;
                 NotifyPropertyChanged("DictionaryPath");
+            }
+        }
+
+        private void listBoxIdItems_KeyUp(object sender, KeyEventArgs e)
+        {
+            var listBox = sender as ListBox;
+            if (listBox != null && listBox.SelectedIndex != -1)
+            {
+                var levelSpec = listBox.DataContext as LevelSpec;
+                levelSpec.IdItems.RemoveAt(listBox.SelectedIndex);
+            }
+        }
+
+        private void listBoxRecords_KeyUp(object sender, KeyEventArgs e)
+        {
+            var listBox = sender as ListBox;
+            if (listBox != null && listBox.SelectedIndex != -1)
+            {
+                var levelSpec = listBox.DataContext as LevelSpec;
+                levelSpec.Records.RemoveAt(listBox.SelectedIndex);
+            }
+        }
+
+        private void buttonRemoveLevel_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            if (button != null)
+            {
+                var levelSpec = button.DataContext as LevelSpec;
+                LevelSpecs.Remove(levelSpec);
             }
         }
     }
