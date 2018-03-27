@@ -8,8 +8,19 @@ using System.Threading.Tasks;
 
 namespace SQLServer2Dictionary
 {
+    /// <summary>
+    /// Generate CSPro data dictionary from SQL Server database
+    /// </summary>
     class DictionaryGenerator
     {
+        /// <summary>
+        /// Construct CSPro data dictionary from dictionary specs.
+        /// </summary>
+        /// <param name="label">Text to use for CSPro dictionary label</param>
+        /// <param name="databaseName">Name of SQL server database (saved in dictionary notes)</param>
+        /// <param name="levelSpecs">List of level specifications that contain mappings from SQL database columns to CSPro levels and records.</param>
+        /// <param name="valueSetRetriever">Utility class to get value sets for generated dictionary items</param>
+        /// <returns>CSPro data dictionary</returns>
         public DataDictionary CreateDictionary(string label, string databaseName, IEnumerable<LevelSpec> levelSpecs, ValueSetRetriever valueSetRetriever)
         {
             var dictionary = new DataDictionary();
@@ -19,6 +30,7 @@ namespace SQLServer2Dictionary
             dictionary.RecordTypeStart = 1;
             dictionary.Note = String.Format("#database {0}", databaseName);
 
+            // Keep track of id-items used at this and previous levels so that they are not repeated
             List<DatabaseColumn> usedIdItems = new List<DatabaseColumn>();
 
             foreach (var levelSpec in levelSpecs)
@@ -31,6 +43,13 @@ namespace SQLServer2Dictionary
             return dictionary;
         }
 
+        /// <summary>
+        /// Fill in a CSPro DictionaryLevel from a LevelSpec
+        /// </summary>
+        /// <param name="dictLevel">Empty level from CSPro dictionary to fill in</param>
+        /// <param name="levelSpec">Level specification that contains mapping from tables to records</param>
+        /// <param name="usedIdItems">List of id-items included in previous levels so that they will not be repeated. Updated by this routine.</param>
+        /// <param name="valueSetRetriever">Utility class to get value sets for generated dictionary items</param>
         private void CreateLevel(DictionaryLevel dictLevel, LevelSpec levelSpec, List<DatabaseColumn> usedIdItems, ValueSetRetriever valueSetRetriever)
         {
             dictLevel.Label = levelSpec.Name;
@@ -56,6 +75,14 @@ namespace SQLServer2Dictionary
             }
         }
 
+        /// <summary>
+        /// Fill in CSPro dictionary record a record specification
+        /// </summary>
+        /// <param name="dictRecord">Empty CSPro DictionaryRecord to fill in</param>
+        /// <param name="recordName">Name to use for record</param>
+        /// <param name="recSpec">RecordSpecification for the record to be generated</param>
+        /// <param name="dbColumns">List of database columns to include the generated record</param>
+        /// <param name="valueSetRetriever">Utility class to get value sets for generated dictionary items</param>
         private void CreateRecord(DictionaryRecord dictRecord, string recordName, RecordSpec recSpec, IEnumerable<DatabaseColumn> dbColumns, ValueSetRetriever valueSetRetriever)
         {
             dictRecord.Label = recSpec.Name;
@@ -69,12 +96,32 @@ namespace SQLServer2Dictionary
             }
         }
 
+        /// <summary>
+        /// Fill in CSPro data dictionary item from DatabaseColumn
+        /// </summary>
+        /// <param name="dictItem">Empty CSPro dictionary item to fill in</param>
+        /// <param name="itemName">Name to use for generated item</param>
+        /// <param name="column">DatabaseColumn to map to this dictionary item</param>
+        /// <param name="valueSetRetriever">Utility class to get value sets for generated dictionary items</param>
         private void CreateItem(DictionaryItem dictItem, string itemName, DatabaseColumn column,  ValueSetRetriever valueSetRetriever)
         {
             dictItem.Label = column.Name;
             dictItem.Name = itemName;
             dictItem.Note = String.Format("#column {0}:{1}", column.Name, column.Type.ToString()); //TODO - sqltype
 
+            SetItemTypeAndLength(dictItem, column);
+
+            valueSetRetriever.GetValueSet(dictItem);
+
+        }
+
+        /// <summary>
+        /// Set type and length of CSPro dictionary item based on type and length of SQL database column
+        /// </summary>
+        /// <param name="dictItem">CSPro dictionary item</param>
+        /// <param name="column">SQL Server database column</param>
+        private static void SetItemTypeAndLength(DictionaryItem dictItem, DatabaseColumn column)
+        {
             switch (Type.GetTypeCode(column.Type))
             {
                 case TypeCode.Int16:
@@ -128,11 +175,12 @@ namespace SQLServer2Dictionary
                 default:
                     throw new Exception("Type " + column.Type.ToString() + " is not supported for " + column.Name);
             }
-
-            valueSetRetriever.GetValueSet(dictItem);
-
         }
 
+        /// <summary>
+        /// Modify the start positions of items in the newly constructed CSPro dictionary so that no items overlap
+        /// </summary>
+        /// <param name="dictionary">CSPro data dictionary</param>
         private static void AdjustItemStartPositions(DataDictionary dictionary)
         {
             int idStart = 2; // type d'enregistrement dans pos 1
@@ -162,15 +210,33 @@ namespace SQLServer2Dictionary
             }
         }
 
+        /// <summary>
+        /// Keep track of names in used in generated dictionary so that no names are duplicated.
+        /// </summary>
         private HashSet<string> usedNames = new HashSet<string>();
 
+        /// <summary>
+        /// Create a valid, unique name from a string.
+        /// </summary>
+        /// <remarks>
+        /// A valid name in a CSPro dictionary consists of only capital letters, numbers and underscore characters.
+        /// It can not be more than 32 characters. Names cannot be duplicated which means that even if items are
+        /// in different records they must have different names.
+        /// </remarks>
+        /// <param name="label">Arbitrary text to convert to valid name</param>
+        /// <param name="postfixForDuplicates">If the generated is already used in the dictionary add this string to the end to make it unique. If no postfix is given an exception is thrown on duplicates.</param>
+        /// <returns>Valid CSPro name</returns>
         private string MakeName(string label, string postfixForDuplicates = null)
         {
+            // Replace invalid characters by uppercase or underscore
             string name = Regex.Replace(label.ToUpper(), @"[^A-Z0-9_]+", "_");
+
+            // Limit length to 32
             const int maxNameLength = 32;
             if (name.Length > maxNameLength)
                 name = name.Substring(0, maxNameLength);
 
+            // Check for duplicates
             if (usedNames.Contains(name))
             {
                 if (postfixForDuplicates == null)

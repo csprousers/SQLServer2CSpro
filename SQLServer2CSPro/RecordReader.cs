@@ -10,6 +10,9 @@ using System.Collections;
 
 namespace SQLServer2CSPro
 {
+    /// <summary>
+    /// Read consecutive readers from a database table as RecordData
+    /// </summary>
     class RecordReader : IDisposable
     {
         private readonly SqlDataReader reader;
@@ -26,6 +29,13 @@ namespace SQLServer2CSPro
 
         private readonly ItemMapping[] itemToColumnMap;
 
+        /// <summary>
+        /// Construct record reader
+        /// </summary>
+        /// <param name="connectionString">Connection string for SQL Server database</param>
+        /// <param name="tableName">Name of table in SQL Server database to read records from</param>
+        /// <param name="recordInfo">Parameters of record in CSPro dictionary corresponding to the database table</param>
+        /// <param name="dictionary">CSPro data dictionary containing the record</param>
         public RecordReader(string connectionString, 
             string tableName,
             RecordInfo recordInfo,
@@ -101,6 +111,12 @@ namespace SQLServer2CSPro
             return true;
         }
 
+        /// <summary>
+        /// Get list of columns from a database table
+        /// </summary>
+        /// <param name="table">Name of database table in SQL Server database</param>
+        /// <param name="connection">Open database connection</param>
+        /// <returns>List of names of table columns</returns>
         private static List<string> GetTableColumns(string table, SqlConnection connection)
         {
             var columns = new List<string>();
