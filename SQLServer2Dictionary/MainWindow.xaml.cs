@@ -52,6 +52,8 @@ namespace SQLServer2Dictionary
 
         public string DatabaseName { get; set; }
 
+        public string ValueSetQueryTemplate { get; set; }
+
         public MainWindow(string connectionString)
         {
             this.connectionString = connectionString;
@@ -276,9 +278,13 @@ namespace SQLServer2Dictionary
             try
             {
                 DictionaryGenerator generator = new DictionaryGenerator();
-                var dictionary = generator.CreateDictionary(DictionaryLabel, DatabaseName, LevelSpecs);
 
-                dictionary.Save(DictionaryPath);
+                using (var valueSetRetriever = new ValueSetRetriever(connectionString, ValueSetQueryTemplate))
+                {
+                    var dictionary = generator.CreateDictionary(DictionaryLabel, DatabaseName, LevelSpecs, valueSetRetriever);
+
+                    dictionary.Save(DictionaryPath);
+                }
 
                 // Show dictionary file in explorer
                 System.Diagnostics.Process.Start("explorer.exe", "/select, \"" + DictionaryPath + "\"");

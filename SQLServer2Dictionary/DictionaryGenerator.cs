@@ -10,7 +10,7 @@ namespace SQLServer2Dictionary
 {
     class DictionaryGenerator
     {
-        public DataDictionary CreateDictionary(string label, string databaseName, IEnumerable<LevelSpec> levelSpecs)
+        public DataDictionary CreateDictionary(string label, string databaseName, IEnumerable<LevelSpec> levelSpecs, ValueSetRetriever valueSetRetriever)
         {
             var dictionary = new DataDictionary();
             dictionary.Label = label;
@@ -19,12 +19,11 @@ namespace SQLServer2Dictionary
             dictionary.RecordTypeStart = 1;
             dictionary.Note = String.Format("#database {0}", databaseName);
 
-
             List<DatabaseColumn> usedIdItems = new List<DatabaseColumn>();
 
             foreach (var levelSpec in levelSpecs)
             {
-                CreateLevel(dictionary.AddLevel(), levelSpec, usedIdItems);
+                CreateLevel(dictionary.AddLevel(), levelSpec, usedIdItems, valueSetRetriever);
             }
 
             AdjustItemStartPositions(dictionary);
@@ -32,7 +31,7 @@ namespace SQLServer2Dictionary
             return dictionary;
         }
 
-        private void CreateLevel(DictionaryLevel dictLevel, LevelSpec levelSpec, List<DatabaseColumn> usedIdItems)
+        private void CreateLevel(DictionaryLevel dictLevel, LevelSpec levelSpec, List<DatabaseColumn> usedIdItems, ValueSetRetriever valueSetRetriever)
         {
             dictLevel.Label = levelSpec.Name;
             dictLevel.Name = MakeName(levelSpec.Name, "_LVL");
@@ -42,7 +41,7 @@ namespace SQLServer2Dictionary
             foreach (var idCol in idColumns)
             {
                 string itemName = MakeName(idCol.Name, "_" + levelSpec.Name);
-                CreateItem(dictLevel.IdItems.AddItem(), itemName, idCol);
+                CreateItem(dictLevel.IdItems.AddItem(), itemName, idCol, valueSetRetriever);
             }
             usedIdItems.AddRange(idColumns);
 
@@ -53,11 +52,11 @@ namespace SQLServer2Dictionary
                 var regularColumns = recSpec.DatabaseTable.Columns.Where(c => usedIdItems.FirstOrDefault(id => id.Name == c.Name) == null);
 
                 string recordName = MakeName(recSpec.Name, "_" + levelSpec.Name);
-                CreateRecord(dictLevel.AddRecord(), recordName, recSpec, regularColumns);
+                CreateRecord(dictLevel.AddRecord(), recordName, recSpec, regularColumns, valueSetRetriever);
             }
         }
 
-        private void CreateRecord(DictionaryRecord dictRecord, string recordName, RecordSpec recSpec, IEnumerable<DatabaseColumn> dbColumns)
+        private void CreateRecord(DictionaryRecord dictRecord, string recordName, RecordSpec recSpec, IEnumerable<DatabaseColumn> dbColumns, ValueSetRetriever valueSetRetriever)
         {
             dictRecord.Label = recSpec.Name;
             dictRecord.Name = recordName;
@@ -66,11 +65,11 @@ namespace SQLServer2Dictionary
             foreach (var dbCol in dbColumns)
             {
                 string itemName = MakeName(dbCol.Name, "_" + dictRecord.Name);
-                CreateItem(dictRecord.AddItem(), itemName, dbCol);
+                CreateItem(dictRecord.AddItem(), itemName, dbCol, valueSetRetriever);
             }
         }
 
-        private void CreateItem(DictionaryItem dictItem, string itemName, DatabaseColumn column)
+        private void CreateItem(DictionaryItem dictItem, string itemName, DatabaseColumn column,  ValueSetRetriever valueSetRetriever)
         {
             dictItem.Label = column.Name;
             dictItem.Name = itemName;
@@ -129,6 +128,9 @@ namespace SQLServer2Dictionary
                 default:
                     throw new Exception("Type " + column.Type.ToString() + " is not supported for " + column.Name);
             }
+
+            valueSetRetriever.GetValueSet(dictItem);
+
         }
 
         private static void AdjustItemStartPositions(DataDictionary dictionary)
